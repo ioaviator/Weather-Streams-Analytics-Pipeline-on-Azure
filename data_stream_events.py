@@ -3,17 +3,32 @@ import sys
 import time
 import json
 import random
-from azure.eventhub import EventHubProducerClient, EventData
 from dotenv import load_dotenv
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
+from azure.eventhub import EventHubProducerClient, EventData
+
 
 load_dotenv()
 
-# Event Hubs connection string and event hub name
-CONNECTION_STR = os.getenv('CONNECTION_STR')
+KEY_VAULT_NAME=os.getenv('KEY_VAULT_NAME')
+key_vault_url = f"https://{KEY_VAULT_NAME}.vault.azure.net"
+
+credential = DefaultAzureCredential()
+client = SecretClient(vault_url=key_vault_url, credential=credential)
+
+event_hubs_conn_str = 'event-hubs-conn-str'
+evnt_hubs_connection_str = client.get_secret(event_hubs_conn_str).value
+
+
+# Event Hubs event hub store name
 EVENTHUB_NAME = 'evnt_hub_store'
 
 # Create a producer client to send messages to the event hub
-producer = EventHubProducerClient.from_connection_string(conn_str=CONNECTION_STR, eventhub_name=EVENTHUB_NAME)
+producer = EventHubProducerClient.from_connection_string(
+  conn_str=evnt_hubs_connection_str, 
+  eventhub_name=EVENTHUB_NAME
+)
 
 # Expanded list of cities with latitudes and longitudes
 CITIES = [
