@@ -3,6 +3,30 @@ resource "azurerm_resource_group" "event-stream-rg" {
   location = "East US"
 }
 
+# Get the current client configuration for access policies
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault" "main" {
+  name                = "eventhubs-stream-kv"
+  location            = azurerm_resource_group.event-stream-rg.location
+  resource_group_name = azurerm_resource_group.event-stream-rg.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
+
+  # Soft delete protects against accidental deletion
+  soft_delete_retention_days = 7
+
+  # Purge protection prevents permanent deletion during retention period
+  purge_protection_enabled = false
+  rbac_authorization_enabled = true
+  
+  tags = {
+    environment = "development"
+    managed_by  = "terraform"
+  }
+}
+
+
 resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
   name                = "evnt-hub-stream-ns"
   location            = azurerm_resource_group.event-stream-rg.location
