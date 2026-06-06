@@ -2,3 +2,5 @@
 *.hcl
 *.backup
 *.tfstate
+venv
+.env
