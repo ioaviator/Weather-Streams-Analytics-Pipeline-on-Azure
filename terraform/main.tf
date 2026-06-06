@@ -14,3 +14,10 @@ resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
     environment = "Development"
   }
 }
+
+resource "azurerm_eventhub" "evnt_hub_store" {
+  name              = "evnt_hub_store"
+  namespace_id      = azurerm_eventhub_namespace.envt_hub_stream_ns.id
+  partition_count   = 2
+  message_retention = 1
+}
