@@ -26,6 +26,13 @@ resource "azurerm_key_vault" "main" {
   }
 }
 
+# Grant the admin the Key Vault Administrator role
+resource "azurerm_role_assignment" "kv_admin" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
 
 resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
   name                = "evnt-hub-stream-ns"
