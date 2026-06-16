@@ -1,4 +1,4 @@
-resource "azurerm_resource_group" "event-stream-rg" {
+resource "azurerm_resource_group" "event_stream_rg" {
   name     = "evnt-stream-rg"
   location = "East US"
 }
@@ -8,8 +8,8 @@ data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "main" {
   name                = "eventhubs-stream-kv"
-  location            = azurerm_resource_group.event-stream-rg.location
-  resource_group_name = azurerm_resource_group.event-stream-rg.name
+  location            = azurerm_resource_group.event_stream_rg.location
+  resource_group_name = azurerm_resource_group.event_stream_rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
@@ -36,14 +36,24 @@ resource "azurerm_role_assignment" "kv_admin" {
 
 resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
   name                = "evnt-hub-stream-ns"
-  location            = azurerm_resource_group.event-stream-rg.location
-  resource_group_name = azurerm_resource_group.event-stream-rg.name
+  location            = azurerm_resource_group.event_stream_rg.location
+  resource_group_name = azurerm_resource_group.event_stream_rg.name
   sku                 = "Standard"
   capacity            = 1
 
   tags = {
     environment = "Development"
   }
+}
+
+resource "azurerm_eventhub_namespace_authorization_rule" "eventhub_auth_key" {
+  name                = "event-hub-auth-key"
+  namespace_name      = azurerm_eventhub_namespace.envt_hub_stream_ns.name
+  resource_group_name = azurerm_resource_group.event_stream_rg.name
+
+  listen = true
+  send   = true
+  manage = true
 }
 
 resource "azurerm_eventhub" "evnt_hub_store" {
@@ -55,9 +65,9 @@ resource "azurerm_eventhub" "evnt_hub_store" {
 
 
 resource "azurerm_databricks_workspace" "databricks" {
-  name                = "evnt-bricks"
-  resource_group_name = azurerm_resource_group.event-stream-rg.name
-  location            = azurerm_resource_group.event-stream-rg.location
+  name                = "evnt-stream-bricks"
+  resource_group_name = azurerm_resource_group.event_stream_rg.name
+  location            = azurerm_resource_group.event_stream_rg.location
   sku                 = "premium"
 
   tags = {

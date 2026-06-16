@@ -4,3 +4,4 @@
 *.tfstate
 venv
 .env
+*.info
