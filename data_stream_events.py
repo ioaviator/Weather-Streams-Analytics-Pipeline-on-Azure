@@ -17,7 +17,7 @@ key_vault_url = f"https://{KEY_VAULT_NAME}.vault.azure.net"
 credential = DefaultAzureCredential()
 kv_secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
 
-event_hubs_conn_str_frm_kv = 'event-hubs-conn-str'
+event_hubs_conn_str_frm_kv = 'key-vault-secret-event-hub'
 evnt_hubs_connection_str = kv_secret_client.get_secret(event_hubs_conn_str_frm_kv).value
 
 
