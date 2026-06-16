@@ -15,10 +15,10 @@ KEY_VAULT_NAME=os.getenv('KEY_VAULT_NAME')
 key_vault_url = f"https://{KEY_VAULT_NAME}.vault.azure.net"
 
 credential = DefaultAzureCredential()
-client = SecretClient(vault_url=key_vault_url, credential=credential)
+kv_client_secret = SecretClient(vault_url=key_vault_url, credential=credential)
 
-event_hubs_conn_str = 'event-hubs-conn-str'
-evnt_hubs_connection_str = client.get_secret(event_hubs_conn_str).value
+event_hubs_conn_str_frm_kv = 'event-hubs-conn-str'
+evnt_hubs_connection_str = kv_client_secret.get_secret(event_hubs_conn_str_frm_kv).value
 
 
 # Event Hubs event hub store name
