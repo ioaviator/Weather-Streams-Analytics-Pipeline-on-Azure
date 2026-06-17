@@ -20,7 +20,8 @@ resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
   capacity            = 1
 
   tags = {
-    environment = "Development"
+    environment = "development"
+    managed_by  = "terraform"
   }
 }
 
@@ -48,10 +49,10 @@ resource "azurerm_key_vault" "main" {
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
-  # Soft delete protects against accidental deletion
+  # protects against accidental deletion
   soft_delete_retention_days = 7
 
-  # Purge protection prevents permanent deletion during retention period
+  # prevents permanent deletion during retention period
   purge_protection_enabled   = false
   rbac_authorization_enabled = true
 
@@ -76,7 +77,7 @@ resource "time_sleep" "wait_for_key_vault_rbac" {
     azurerm_role_assignment.kv_admin
   ]
 
-  create_duration = "60s"
+  create_duration = "50s"
 }
 
 resource "azurerm_key_vault_secret" "vault_secret" {
@@ -98,7 +99,7 @@ resource "time_sleep" "wait_for_databricks_workspace" {
     azurerm_databricks_workspace.databricks
   ]
 
-  create_duration = "20s"
+  create_duration = "30s"
 }
 
 data "databricks_current_user" "current_user" {
@@ -114,7 +115,8 @@ resource "azurerm_databricks_workspace" "databricks" {
   sku                 = "premium"
 
   tags = {
-    Environment = "Development"
+    environment = "development"
+    managed_by  = "terraform"
   }
 }
 
@@ -135,8 +137,8 @@ resource "databricks_cluster" "evnt_stream_cluster" {
   single_user_name   = data.databricks_current_user.current_user.user_name
 
   custom_tags = {
-    Environment = "Development"
-    ManagedBy   = "Terraform"
+    environment = "development"
+    managed_by  = "terraform"
   }
 
   depends_on = [
@@ -147,43 +149,43 @@ resource "databricks_cluster" "evnt_stream_cluster" {
 
 # Databricks Notebook
 # -----------------------------------------------------
-locals {
-  databricks_project_path = "/Workspace${data.databricks_current_user.current_user.home}/eventhub_streaming_pipeline"
-}
+# locals {
+#   databricks_project_path = "/Workspace${data.databricks_current_user.current_user.home}/eventhub_streaming_pipeline"
+# }
 
-resource "databricks_directory" "project_folder" {
-  path = local.databricks_project_path
+# resource "databricks_directory" "project_folder" {
+#   path = local.databricks_project_path
 
-  depends_on = [
-    time_sleep.wait_for_databricks_workspace
-  ]
-}
+#   depends_on = [
+#     time_sleep.wait_for_databricks_workspace
+#   ]
+# }
 
-resource "databricks_notebook" "stream_processor" {
-  path     = "${local.databricks_project_path}/data_stream_events"
-  language = "PYTHON"
-  source   = "${path.module}/../data_stream_events.py"
+# resource "databricks_notebook" "stream_processor" {
+#   path     = "${local.databricks_project_path}/data_stream_events"
+#   language = "PYTHON"
+#   source   = "${path.module}/../data_stream_events.py"
 
-  depends_on = [
-    databricks_directory.project_folder
-  ]
-}
+#   depends_on = [
+#     databricks_directory.project_folder
+#   ]
+# }
 
-resource "databricks_workspace_file" "requirements_file" {
-  path   = "${local.databricks_project_path}/requirements.txt"
-  source = "${path.module}/../requirements.txt"
+# resource "databricks_workspace_file" "requirements_file" {
+#   path   = "${local.databricks_project_path}/requirements.txt"
+#   source = "${path.module}/../requirements.txt"
 
-  depends_on = [
-    databricks_directory.project_folder
-  ]
-}
+#   depends_on = [
+#     databricks_directory.project_folder
+#   ]
+# }
 
-resource "databricks_library" "python_libraries" {
-  cluster_id   = databricks_cluster.evnt_stream_cluster.id
-  requirements = databricks_workspace_file.requirements_file.path
+# resource "databricks_library" "python_libraries" {
+#   cluster_id   = databricks_cluster.evnt_stream_cluster.id
+#   requirements = databricks_workspace_file.requirements_file.path
 
-  depends_on = [
-    databricks_workspace_file.requirements_file,
-    databricks_cluster.evnt_stream_cluster
-  ]
-}
+#   depends_on = [
+#     databricks_workspace_file.requirements_file,
+#     databricks_cluster.evnt_stream_cluster
+#   ]
+# }
