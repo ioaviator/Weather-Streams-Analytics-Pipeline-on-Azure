@@ -7,7 +7,12 @@ terraform {
 
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.12"
+      version = "0.14.0"
+    }
+
+    databricks = {
+      source  = "databricks/databricks"
+      version = "1.117.0"
     }
 
   }
@@ -22,3 +27,9 @@ provider "azurerm" {
     }
   }
 }
+
+provider "databricks" {
+  host                        = azurerm_databricks_workspace.databricks.workspace_url
+  azure_workspace_resource_id = azurerm_databricks_workspace.databricks.id
+}
+

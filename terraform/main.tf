@@ -90,6 +90,23 @@ resource "azurerm_key_vault_secret" "vault_secret" {
   ]
 }
 
+
+# Azure Databricks Setup
+
+resource "time_sleep" "wait_for_databricks_workspace" {
+  depends_on = [
+    azurerm_databricks_workspace.databricks
+  ]
+
+  create_duration = "20s"
+}
+
+data "databricks_current_user" "current_user" {
+  depends_on = [
+    time_sleep.wait_for_databricks_workspace
+  ]
+}
+
 resource "azurerm_databricks_workspace" "databricks" {
   name                = "evnt-stream-bricks"
   resource_group_name = azurerm_resource_group.event_stream_rg.name
@@ -99,4 +116,74 @@ resource "azurerm_databricks_workspace" "databricks" {
   tags = {
     Environment = "Development"
   }
+}
+
+resource "databricks_cluster" "evnt_stream_cluster" {
+  cluster_name            = "event_stream_cluster"
+  spark_version           = "17.3.x-scala2.13"
+  node_type_id            = "Standard_DC4as_v5"
+  autotermination_minutes = 15
+
+  autoscale {
+    min_workers = 1
+    max_workers = 2
+  }
+
+  data_security_mode = "DATA_SECURITY_MODE_DEDICATED"
+  kind               = "CLASSIC_PREVIEW"
+  is_single_node     = true
+  single_user_name   = data.databricks_current_user.current_user.user_name
+
+  custom_tags = {
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+  }
+
+  depends_on = [
+    time_sleep.wait_for_databricks_workspace
+  ]
+}
+
+
+# Databricks Notebook
+# -----------------------------------------------------
+locals {
+  databricks_project_path = "/Workspace${data.databricks_current_user.current_user.home}/eventhub_streaming_pipeline"
+}
+
+resource "databricks_directory" "project_folder" {
+  path = local.databricks_project_path
+
+  depends_on = [
+    time_sleep.wait_for_databricks_workspace
+  ]
+}
+
+resource "databricks_notebook" "stream_processor" {
+  path     = "${local.databricks_project_path}/data_stream_events"
+  language = "PYTHON"
+  source   = "${path.module}/../data_stream_events.py"
+
+  depends_on = [
+    databricks_directory.project_folder
+  ]
+}
+
+resource "databricks_workspace_file" "requirements_file" {
+  path   = "${local.databricks_project_path}/requirements.txt"
+  source = "${path.module}/../requirements.txt"
+
+  depends_on = [
+    databricks_directory.project_folder
+  ]
+}
+
+resource "databricks_library" "python_libraries" {
+  cluster_id   = databricks_cluster.evnt_stream_cluster.id
+  requirements = databricks_workspace_file.requirements_file.path
+
+  depends_on = [
+    databricks_workspace_file.requirements_file,
+    databricks_cluster.evnt_stream_cluster
+  ]
 }
