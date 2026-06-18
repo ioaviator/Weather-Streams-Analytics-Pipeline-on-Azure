@@ -3,7 +3,7 @@ from azure.identity import DefaultAzureCredential
 
 
 KEY_VAULT_NAME='eventhubs-stream-kv'
-key_vault_url = 'https://{KEY_VAULT_NAME}.vault.azure.net'
+key_vault_url = f'https://{KEY_VAULT_NAME}.vault.azure.net'
 
 credential = DefaultAzureCredential()
 kv_secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
