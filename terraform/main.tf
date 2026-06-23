@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "event_stream_rg" {
-  name     = "evnt-stream-rg"
-  location = "East US"
+  name     = "evnt-stream-rg-1"
+  location = "Canada Central"
 }
 
 # Get the current client configuration for access policies
@@ -43,7 +43,7 @@ resource "azurerm_eventhub_namespace_authorization_rule" "eventhub_auth_key" {
 }
 
 resource "azurerm_key_vault" "main" {
-  name                = "eventhubs-stream-kv"
+  name                = "eventhubs-streams-kv"
   location            = azurerm_resource_group.event_stream_rg.location
   resource_group_name = azurerm_resource_group.event_stream_rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
@@ -122,11 +122,11 @@ resource "azurerm_databricks_workspace" "databricks" {
     managed_by  = "terraform"
   }
 }
-
+# "15.4.x-scala2.12"
 resource "databricks_cluster" "evnt_stream_cluster" {
   cluster_name            = "event_stream_cluster"
-  spark_version           = "17.3.x-scala2.13"
-  node_type_id            = "Standard_DC4as_v5"
+  spark_version           = "18.x-scala2.13"
+  node_type_id            = "Standard_D4plds_v6"
   autotermination_minutes = 20
 
   data_security_mode = "DATA_SECURITY_MODE_DEDICATED"
