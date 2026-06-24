@@ -6,12 +6,6 @@ resource "azurerm_resource_group" "event_stream_rg" {
 # Get the current client configuration for access policies
 data "azurerm_client_config" "current" {}
 
-data "azurerm_eventhub_namespace_authorization_rule" "eventhub_ns_auth_rule" {
-  name                = azurerm_eventhub_namespace_authorization_rule.eventhub_auth_key.name
-  resource_group_name = azurerm_resource_group.event_stream_rg.name
-  namespace_name      = azurerm_eventhub_namespace.envt_hub_stream_ns.name
-}
-
 resource "azurerm_eventhub_namespace" "envt_hub_stream_ns" {
   name                = "evnt-hub-stream-ns"
   location            = azurerm_resource_group.event_stream_rg.location
@@ -122,11 +116,23 @@ resource "azurerm_databricks_workspace" "databricks" {
     managed_by  = "terraform"
   }
 }
+
+data "databricks_node_type" "smallest" {
+  local_disk = true
+}
+
+data "databricks_spark_version" "latest_lts" {
+  long_term_support = true
+}
+
+
 # "15.4.x-scala2.12"
-resource "databricks_cluster" "evnt_stream_cluster" {
-  cluster_name            = "event_stream_cluster"
-  spark_version           = "18.x-scala2.13"
-  node_type_id            = "Standard_D4plds_v6"
+# "18.x-scala2.13"
+# "Standard_D4s_v3"
+resource "databricks_cluster" "metro_ride_cluster" {
+  cluster_name            = "metro_ride_cluster"
+  spark_version           = data.databricks_spark_version.latest_lts.id
+  node_type_id            = data.databricks_node_type.smallest.id
   autotermination_minutes = 20
 
   data_security_mode = "DATA_SECURITY_MODE_DEDICATED"

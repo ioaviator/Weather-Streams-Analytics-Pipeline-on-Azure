@@ -6,3 +6,4 @@ venv
 .env
 *.info
 __pycache__
+credentials.txt

@@ -29,6 +29,8 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = true
     }
   }
+  subscription_id = file("credentials.txt")
+
 }
 
 provider "databricks" {
